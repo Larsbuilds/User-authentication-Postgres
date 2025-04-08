@@ -1,237 +1,247 @@
-# PostgreSQL Node.js Example
+# PostgreSQL API with Node.js and Express
 
-This is a simple Node.js application that demonstrates how to connect to and interact with a PostgreSQL database.
+A RESTful API built with Node.js, Express, and PostgreSQL, featuring user authentication, post management, and comprehensive test coverage.
 
-## Setup
+## Features
 
-1. Make sure PostgreSQL is running:
-```bash
-brew services start postgresql@17
-```
+- **User Authentication**
+  - JWT-based authentication
+  - Secure password hashing with bcrypt
+  - User registration and login
+  - Profile management (view, update, delete)
+
+- **Post Management**
+  - Create, read, update, and delete posts
+  - Tag support for posts
+  - Pagination for post listings
+  - Author-based post filtering
+
+- **Security**
+  - Input validation using express-validator
+  - CORS protection
+  - Secure password requirements
+  - JWT token validation with user existence check
+
+- **Testing**
+  - Comprehensive test suite using Jest
+  - Test database isolation
+  - Coverage reporting
+  - Authentication flow testing
+  - CRUD operation testing
+  - Error handling verification
+
+## Prerequisites
+
+- Node.js (v14 or higher)
+- PostgreSQL (v12 or higher)
+- npm or yarn
+
+## Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/postgresql-api.git
+   cd postgresql-api
+   ```
 
 2. Install dependencies:
-```bash
-npm install
-```
+   ```bash
+   npm install
+   ```
 
-3. Create a `.env` file with your database credentials and JWT secret:
-```bash
-cp .env.example .env
-```
-Then update the values in `.env`:
-```bash
-DB_USER=your_db_user
-DB_PASSWORD=your_db_password
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=your_db_name
-JWT_SECRET=your_jwt_secret
-```
+3. Create a `.env` file from the example:
+   ```bash
+   cp .env.example .env
+   ```
 
-4. Run database migrations:
-```bash
-npm run migrate
-```
+4. Update the `.env` file with your database credentials and JWT secret:
+   ```
+   DB_USER=your_db_user
+   DB_PASSWORD=your_db_password
+   DB_HOST=localhost
+   DB_PORT=5432
+   DB_NAME=your_db_name
+   JWT_SECRET=your_jwt_secret
+   ```
 
-5. Start the application:
-```bash
-npm start
-```
+5. Create a test database and update `.env.test`:
+   ```
+   DB_USER=your_db_user
+   DB_PASSWORD=your_db_password
+   DB_HOST=localhost
+   DB_PORT=5432
+   DB_NAME=your_db_name_test
+   JWT_SECRET=your_test_jwt_secret
+   ```
 
-For development with hot reload:
+6. Run database migrations:
+   ```bash
+   npm run migrate
+   ```
+
+## Running the Application
+
+### Development
 ```bash
 npm run dev
 ```
 
-## Authentication
-
-### Register
+### Production
 ```bash
-curl -X POST -H "Content-Type: application/json" -d '{"username":"newuser","email":"newuser@example.com","password":"Password123!"}' http://localhost:3000/register
+npm start
 ```
 
-### Login
+### Running Tests
 ```bash
-curl -X POST -H "Content-Type: application/json" -d '{"email":"newuser@example.com","password":"Password123!"}' http://localhost:3000/login
+npm test
 ```
 
-The login and register endpoints will return a JWT token that should be included in subsequent requests in the Authorization header:
-```
-Authorization: Bearer <your_token>
-```
-
-## Available Endpoints
-
-### Users
-- `GET /users` - Get all users (requires authentication)
-- `POST /users` - Create a new user (requires authentication)
-  ```json
-  {
-    "username": "newuser",  // 3-50 chars, letters, numbers, underscores only
-    "email": "newuser@example.com",  // Valid email format, max 255 chars
-    "password": "Password123!"  // Optional, min 8 chars, requires uppercase, lowercase, number, and special char
-  }
-  ```
-- `DELETE /users/:userId` - Delete a user and their posts (requires authentication)
-- `GET /users/:userId/posts` - Get all posts by a specific user (requires authentication)
-
-### Posts
-- `GET /posts` - Get all posts with author information (requires authentication)
-- `GET /posts/:postId` - Get a single post with author information (requires authentication)
-- `POST /posts` - Create a new post (requires authentication)
-  ```json
-  {
-    "author_id": 1,  // Must be a positive integer, must exist
-    "title": "New Post",  // 1-255 chars, letters, numbers, spaces, basic punctuation
-    "content": "This is the content",  // 1-10000 chars
-    "tags": ["nodejs", "postgresql"]  // Optional, max 5 tags, letters, numbers, hyphens only
-  }
-  ```
-- `PUT /posts/:postId` - Update a post (requires authentication)
-  ```json
-  {
-    "title": "Updated Title",  // 1-255 chars, letters, numbers, spaces, basic punctuation
-    "content": "Updated content",  // 1-10000 chars
-    "tags": ["updated", "tags"]  // Optional, max 5 tags, letters, numbers, hyphens only
-  }
-  ```
-- `DELETE /posts/:postId` - Delete a post (requires authentication)
-
-## Validation Rules
-
-### User Validation
-- Username:
-  - Must be between 3 and 50 characters
-  - Can only contain letters, numbers, and underscores
-  - Will be converted to lowercase
-  - Must be unique
-- Email:
-  - Must be a valid email format
-  - Will be normalized (lowercase, etc.)
-  - Must be less than 255 characters
-  - Must be unique
-- Password (optional):
-  - Must be at least 8 characters long
-  - Must contain at least one uppercase letter
-  - Must contain at least one lowercase letter
-  - Must contain at least one number
-  - Must contain at least one special character
-
-### Post Validation
-- Title:
-  - Must be between 1 and 255 characters
-  - Can only contain letters, numbers, spaces, and basic punctuation
-- Content:
-  - Must be between 1 and 10000 characters
-  - Will be escaped for security
-- Author ID:
-  - Must be a positive integer
-  - Must exist in the users table
-- Tags (optional):
-  - Must be an array
-  - Maximum 5 tags allowed
-  - Each tag can only contain letters, numbers, and hyphens
-  - Tags will be converted to lowercase
-
-### ID Parameters
-- User ID and Post ID:
-  - Must be positive integers
-  - Must exist in their respective tables
-
-### Query Parameters
-- Page:
-  - Must be a positive integer
-- Limit:
-  - Must be between 1 and 100
-- Sort:
-  - Must be one of: created_at, updated_at, title
-- Order:
-  - Must be either asc or desc
-
-## Error Responses
-
-### Authentication Errors
-```json
-{
-  "error": "Authentication token required"
-}
-```
-or
-```json
-{
-  "error": "Invalid or expired token"
-}
+To run tests with coverage report:
+```bash
+npm run test:coverage
 ```
 
-### Validation Errors
-```json
-{
-  "errors": [
-    {
-      "field": "username",
-      "message": "Username must be between 3 and 50 characters",
-      "value": "a"
-    }
-  ]
-}
-```
-
-## Testing with curl
+## API Documentation
 
 ### Authentication
-Register a new user:
-```bash
-curl -X POST -H "Content-Type: application/json" -d '{"username":"newuser","email":"newuser@example.com","password":"Password123!"}' http://localhost:3000/register
+
+#### Register a new user
+```http
+POST /api/auth/register
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "email": "test@example.com",
+  "password": "Password123!"
+}
 ```
 
-Login:
-```bash
-curl -X POST -H "Content-Type: application/json" -d '{"email":"newuser@example.com","password":"Password123!"}' http://localhost:3000/login
+#### Login
+```http
+POST /api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "Password123!"
+}
 ```
 
-### Users
-Get all users (requires token):
-```bash
-curl -H "Authorization: Bearer <your_token>" http://localhost:3000/users
+### User Profile
+
+#### Get user profile
+```http
+GET /api/users/profile
+Authorization: Bearer <token>
 ```
 
-Create a new user (requires token):
-```bash
-curl -X POST -H "Content-Type: application/json" -H "Authorization: Bearer <your_token>" -d '{"username":"newuser","email":"newuser@example.com","password":"Password123!"}' http://localhost:3000/users
+#### Update user profile
+```http
+PUT /api/users/profile
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "username": "newusername",
+  "email": "new@example.com"
+}
 ```
 
-Delete a user (requires token):
-```bash
-curl -X DELETE -H "Authorization: Bearer <your_token>" http://localhost:3000/users/1
-```
-
-Get posts by user (requires token):
-```bash
-curl -H "Authorization: Bearer <your_token>" http://localhost:3000/users/1/posts
+#### Delete user profile
+```http
+DELETE /api/users/profile
+Authorization: Bearer <token>
 ```
 
 ### Posts
-Get all posts (requires token):
-```bash
-curl -H "Authorization: Bearer <your_token>" http://localhost:3000/posts
+
+#### Create a post
+```http
+POST /api/posts
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "title": "My First Post",
+  "content": "This is the content of my post",
+  "tags": ["tech", "programming"]
+}
 ```
 
-Get a single post (requires token):
-```bash
-curl -H "Authorization: Bearer <your_token>" http://localhost:3000/posts/1
+#### Get all posts
+```http
+GET /api/posts
 ```
 
-Create a new post (requires token):
-```bash
-curl -X POST -H "Content-Type: application/json" -H "Authorization: Bearer <your_token>" -d '{"author_id":1,"title":"New Post","content":"Hello!","tags":["nodejs","postgresql"]}' http://localhost:3000/posts
+#### Get posts with pagination
+```http
+GET /api/posts?page=1&limit=10
 ```
 
-Update a post (requires token):
-```bash
-curl -X PUT -H "Content-Type: application/json" -H "Authorization: Bearer <your_token>" -d '{"title":"Updated Title","content":"Updated content","tags":["updated","tags"]}' http://localhost:3000/posts/1
+#### Get post by ID
+```http
+GET /api/posts/:id
 ```
 
-Delete a post (requires token):
-```bash
-curl -X DELETE -H "Authorization: Bearer <your_token>" http://localhost:3000/posts/1
-``` 
+#### Update a post
+```http
+PUT /api/posts/:id
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "title": "Updated Post",
+  "content": "Updated content",
+  "tags": ["updated", "tags"]
+}
+```
+
+#### Delete a post
+```http
+DELETE /api/posts/:id
+Authorization: Bearer <token>
+```
+
+## Test Coverage
+
+The project includes a comprehensive test suite covering:
+
+- Authentication flows (registration, login)
+- User profile management
+- Post CRUD operations
+- Input validation
+- Error handling
+- Security measures
+
+Run `npm run test:coverage` to generate a coverage report.
+
+## Error Handling
+
+The API uses a consistent error handling format:
+
+```json
+{
+  "status": "error",
+  "message": "Error message",
+  "code": 400
+}
+```
+
+Common error codes:
+- 400: Bad Request
+- 401: Unauthorized
+- 404: Not Found
+- 500: Internal Server Error
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details. 
